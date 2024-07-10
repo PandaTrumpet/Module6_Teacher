@@ -10,6 +10,7 @@ import {
   signinController,
   signoutController,
   signupController,
+  verifyController,
 } from '../controllers/auth-controllers.js';
 
 const authRouter = Router();
@@ -18,6 +19,7 @@ authRouter.post(
   validateBody(userSignupSchema),
   ctrlWrapper(signupController),
 );
+authRouter.get('/verify', ctrlWrapper(verifyController));
 authRouter.post(
   '/signin',
   validateBody(userSigninSchema),

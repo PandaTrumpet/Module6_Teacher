@@ -1,11 +1,23 @@
 import createHttpError from 'http-errors';
-import { findUser, signup } from '../services/auth-services.js';
+import { findUser, signup, updtaeUser } from '../services/auth-services.js';
 import { compareHash } from '../utils/hash.js';
 import {
   createSession,
   deleteSession,
   findSession,
 } from '../services/session0servise.js';
+import { TEMPLATES_DIR } from '../constants/index.js';
+// console.log(TEMPLATES_DIR);
+import fs from 'node:fs/promises';
+import sendEmail from '../utils/sendEmail.js';
+import jwt from 'jsonwebtoken';
+import env from '../utils/env.js';
+import handlebars from 'handlebars';
+import path from 'node:path';
+const app_domain = env('APP_DOMAIN');
+const jwt_secret = env('JWT_SECRET');
+
+const verifyEmailPath = path.join(TEMPLATES_DIR, 'verify-email.html');
 
 const setupResponseSession = (
   res,
@@ -29,7 +41,25 @@ export const signupController = async (req, res) => {
     throw createHttpError(409, 'Email already in use');
   }
   const newUser = await signup(req.body);
+  const payload = {
+    id: newUser._id,
+    email,
+  };
+  const token = jwt.sign(payload, jwt_secret);
+  const emailTemplateSourse = await fs.readFile(verifyEmailPath, 'utf-8');
+  const emailTemplate = handlebars.compile(emailTemplateSourse);
+  const html = emailTemplate({
+    project_name: 'My movies',
+    app_domain,
+    token,
+  });
 
+  const verifyEmail = {
+    subject: 'Verify email',
+    to: email,
+    html,
+  };
+  await sendEmail(verifyEmail);
   const data = { name: newUser.name, email: newUser.email };
   res.status(201).json({
     status: 201,
@@ -37,7 +67,28 @@ export const signupController = async (req, res) => {
     message: 'User signup successfuly',
   });
 };
+//
+//
+//
+//
 
+export const verifyController = async (req, res) => {
+  const { token } = req.query;
+  try {
+    const { id, email } = jwt.verify(token, jwt_secret);
+    const user = await findUser({ _id: id, email });
+    if (!user) {
+      throw createHttpError(404, 'User not found');
+    }
+    await updtaeUser({ email }, { verify: true });
+    res.json({
+      status: 200,
+      message: 'Email verify successful!',
+    });
+  } catch (error) {
+    throw createHttpError(401, error.message);
+  }
+};
 export const signinController = async (req, res) => {
   const { email, password } = req.body;
 
@@ -45,7 +96,9 @@ export const signinController = async (req, res) => {
   if (!user) {
     throw createHttpError(404, 'Email not found');
   }
-
+  if (!user.verify) {
+    throw createHttpError(401, 'Email not verify');
+  } // для логина с подтверджденно йпочтой
   const passwordCompare = await compareHash(password, user.password);
   if (!passwordCompare) {
     throw createHttpError(401, 'Password invalid');

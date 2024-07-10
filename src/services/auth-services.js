@@ -7,3 +7,5 @@ export const signup = async (data) => {
   const hashPassword = await hashValue(password);
   return User.create({ ...data, password: hashPassword });
 };
+
+export const updtaeUser = (filter, data) => User.findOneAndUpdate(filter, data);
