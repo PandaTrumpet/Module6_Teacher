@@ -76,6 +76,7 @@ export const addMovieController = async (req, res) => {
 
   // console.log(req.user);
   const { _id: userId } = req.user;
+  console.log(req.file);
   const result = await adddMOvie({ ...req.body, userId });
 
   res.status(201).json({
