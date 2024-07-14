@@ -9,7 +9,7 @@ import createHttpError from 'http-errors';
 import parsePaginationParam from '../utils/parsePaginationParams.js';
 import parseSortParams from '../utils/parseSortParams.js';
 import { movieFiledList } from '../constants/movies-constants.js';
-
+import { saveFileToPublicDir } from '../utils/saveFileToPublicDir.js';
 import parseMovieFilterParams from '../utils/parseMovieFilterParams.js';
 export const getAllMoviesController = async (req, res) => {
   const { _id: userId } = req.user;
@@ -77,7 +77,12 @@ export const addMovieController = async (req, res) => {
   // console.log(req.user);
   const { _id: userId } = req.user;
   console.log(req.file);
-  const result = await adddMOvie({ ...req.body, userId });
+  let poster = '';
+  if (req.file) {
+    poster = await saveFileToPublicDir(req.file, 'posters');
+  }
+
+  const result = await adddMOvie({ ...req.body, userId, poster });
 
   res.status(201).json({
     status: 201,

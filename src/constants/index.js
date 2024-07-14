@@ -6,3 +6,4 @@ export const REFRESH_TOKEN_LIFETIME = 7 * 24 * 3600 * 1000;
 export const TEMPLATES_DIR = path.resolve('src', 'templates');
 export const TEMP_UPLOAD = path.resolve('src', 'temp');
 export const PUBLICK_DIR = path.resolve('src', 'public');
+export const POSTER_DIR = path.resolve('src', 'public', 'posters');
